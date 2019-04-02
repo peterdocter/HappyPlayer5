@@ -7,9 +7,7 @@ import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Typeface;
-import android.net.Uri;
 import android.os.AsyncTask;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -191,7 +189,6 @@ public class LrcImg2VideoActivity extends BaseActivity {
         mOutputTranslateLrcRadioButton.setEnabled(false);
         //
         mOutputTransliterationLrcRadioButton.setEnabled(false);
-        ;
     }
 
     /**
@@ -266,17 +263,8 @@ public class LrcImg2VideoActivity extends BaseActivity {
             @Override
             public void onClick(View view) {
 
-                Intent intent = null;
-                if (Build.VERSION.SDK_INT < 19) {
-                    intent = new Intent(Intent.ACTION_GET_CONTENT);
-                    intent.setType("file/*");
-                    intent.addCategory(Intent.CATEGORY_OPENABLE);
-
-                } else {
-                    intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
-                    intent.setType("file/*");
-                }
-                startActivityForResult(intent, SELECTORIGFILE);
+                Intent selectFileIntent = new Intent(LrcImg2VideoActivity.this, FileManagerActivity.class);
+                startActivityForResult(selectFileIntent, SELECTORIGFILE);
 
             }
         });
@@ -837,19 +825,7 @@ public class LrcImg2VideoActivity extends BaseActivity {
         if (requestCode == SELECTORIGFILE) {
             if (resultCode == Activity.RESULT_OK) {
 
-                Uri uri = data.getData();
-                if ("file".equalsIgnoreCase(uri.getScheme())) {//使用第三方应用打开
-                    mLrcFilePath = uri.getPath();
-
-                    return;
-                }
-                if (Build.VERSION.SDK_INT > Build.VERSION_CODES.KITKAT) {//4.4以后
-                    mLrcFilePath = FileUtils.getPath(getApplicationContext(), uri);
-
-                } else {//4.4以下下系统调用方法
-                    mLrcFilePath = FileUtils.getRealPathFromURI(getApplicationContext(), uri);
-
-                }
+                mLrcFilePath = data.getStringExtra("selectFilePath");
                 if (mLrcFilePath != null && !mLrcFilePath.equals("")) {
                     String ext = FileUtils.getFileExt(mLrcFilePath);
                     if (!ext.equals("krc") && !ext.equals("ksc") && !ext.equals("hrc") && !ext.equals("lrc")) {

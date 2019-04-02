@@ -2,13 +2,12 @@ package com.zlm.hp.ui;
 
 import android.app.Activity;
 import android.content.Intent;
-import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.view.View;
 import android.widget.Button;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -116,31 +115,72 @@ public class LrcMakerActivity extends BaseActivity {
         TextView titleView = findViewById(R.id.title);
         titleView.setText("歌词制作器");
 
+        //返回
+        RelativeLayout backImg = findViewById(R.id.backImg);
+        backImg.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                mSwipeBackLayout.closeView();
+
+            }
+        });
+
         //选择歌曲按钮
         Button selectAudioFile = findViewById(R.id.selectAudioFile);
         selectAudioFile.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
 
-                Intent intent = null;
-                if (Build.VERSION.SDK_INT < 19) {
-                    intent = new Intent(Intent.ACTION_GET_CONTENT);
-                    intent.setType("file/*");
-                    intent.addCategory(Intent.CATEGORY_OPENABLE);
+                Intent selectFileIntent = new Intent(LrcMakerActivity.this, FileManagerActivity.class);
+                startActivityForResult(selectFileIntent, SELECTAUDIOFILE);
 
-                } else {
-                    intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
-                    intent.setType("file/*");
-                }
-                startActivityForResult(intent, SELECTAUDIOFILE);
 
             }
         });
         mAudioFilePathTv = findViewById(R.id.audioFilePath);
+
+        //制作歌词
         Button mMakeLrcBtn = findViewById(R.id.makeLrcBtn);
         mMakeLrcBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+
+                //传递音频和歌词数据
+                if (mAudioFilePath == null || mAudioFilePath.equals("")) {
+
+                    Toast.makeText(getApplicationContext(), "请选择支持的音频文件！", Toast.LENGTH_SHORT).show();
+
+                    return;
+                }
+
+
+                //打开歌词制作界面
+                Intent lrcMakeIntent = new Intent(LrcMakerActivity.this,
+                        LrcMakeSettingActivity.class);
+
+
+                lrcMakeIntent.putExtra("audioFilePath", mAudioFilePath);
+
+                if (mLrcFilePath != null && !mLrcFilePath.equals(""))
+                    lrcMakeIntent.putExtra("lrcFilePath", mLrcFilePath);
+
+                lrcMakeIntent.putExtra("reloadLrcData", false);
+                startActivity(lrcMakeIntent);
+                //去掉动画
+                overridePendingTransition(0, 0);
+
+                new Thread() {
+                    @Override
+                    public void run() {
+                        try {
+                            Thread.sleep(300);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                        finish();
+                    }
+                }.start();
+
 
             }
         });
@@ -151,28 +191,14 @@ public class LrcMakerActivity extends BaseActivity {
             @Override
             public void onClick(View view) {
 
-                Intent intent = null;
-                if (Build.VERSION.SDK_INT < 19) {
-                    intent = new Intent(Intent.ACTION_GET_CONTENT);
-                    intent.setType("file/*");
-                    intent.addCategory(Intent.CATEGORY_OPENABLE);
+                Intent selectFileIntent = new Intent(LrcMakerActivity.this, FileManagerActivity.class);
+                startActivityForResult(selectFileIntent, SELECTLRCFILE);
 
-                } else {
-                    intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
-                    intent.setType("file/*");
-                }
-                startActivityForResult(intent, SELECTLRCFILE);
 
             }
         });
         mLrcFilePathTv = findViewById(R.id.lrcFilePath);
-        Button mMakeExtraLrcBtn = findViewById(R.id.makeExtraLrcBtn);
-        mMakeExtraLrcBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
 
-            }
-        });
     }
 
     @Override
@@ -200,19 +226,7 @@ public class LrcMakerActivity extends BaseActivity {
         if (requestCode == SELECTAUDIOFILE) {
             if (resultCode == Activity.RESULT_OK) {
 
-                Uri uri = data.getData();
-                if ("file".equalsIgnoreCase(uri.getScheme())) {//使用第三方应用打开
-                    mAudioFilePath = uri.getPath();
-
-                    return;
-                }
-                if (Build.VERSION.SDK_INT > Build.VERSION_CODES.KITKAT) {//4.4以后
-                    mAudioFilePath = FileUtils.getPath(getApplicationContext(), uri);
-
-                } else {//4.4以下下系统调用方法
-                    mAudioFilePath = FileUtils.getRealPathFromURI(getApplicationContext(), uri);
-
-                }
+                mAudioFilePath = data.getStringExtra("selectFilePath");
                 if (mAudioFilePath != null && !mAudioFilePath.equals("")) {
                     String ext = FileUtils.getFileExt(mAudioFilePath);
                     if (!ext.equals("mp3") && !ext.equals("ape") && !ext.equals("flac") && !ext.equals("wav")) {
@@ -227,22 +241,10 @@ public class LrcMakerActivity extends BaseActivity {
         } else {
             if (resultCode == Activity.RESULT_OK) {
 
-                Uri uri = data.getData();
-                if ("file".equalsIgnoreCase(uri.getScheme())) {//使用第三方应用打开
-                    mLrcFilePath = uri.getPath();
-
-                    return;
-                }
-                if (Build.VERSION.SDK_INT > Build.VERSION_CODES.KITKAT) {//4.4以后
-                    mLrcFilePath = FileUtils.getPath(getApplicationContext(), uri);
-
-                } else {//4.4以下下系统调用方法
-                    mLrcFilePath = FileUtils.getRealPathFromURI(getApplicationContext(), uri);
-
-                }
+                mLrcFilePath = data.getStringExtra("selectFilePath");
                 if (mLrcFilePath != null && !mLrcFilePath.equals("")) {
                     String ext = FileUtils.getFileExt(mLrcFilePath);
-                    if (!ext.equals("krc") && !ext.equals("hrc")) {
+                    if (!ext.equals("krc") && !ext.equals("hrc") && !ext.equals("ksc") && !ext.equals("lrc")) {
                         Toast.makeText(getApplicationContext(), "请选择支持的歌词文件！", Toast.LENGTH_SHORT).show();
                         return;
                     }

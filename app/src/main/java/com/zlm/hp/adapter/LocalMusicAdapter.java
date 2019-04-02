@@ -60,6 +60,7 @@ public class LocalMusicAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
     private HPApplication mHPApplication;
 
 
+    private CallBack mCallBack;
     /////////////////////////////////////////
     /**
      * 菜单打开索引
@@ -163,9 +164,10 @@ public class LocalMusicAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
                     viewHolder.getUnLikeImgBtn().setVisibility(View.VISIBLE);
                     ToastUtil.showTextToast(mContext, "取消成功");
 
+                    AudioInfoDB.getAudioInfoDB(mContext).deleteRecentOrLikeAudio(audioInfo.getHash(), audioInfo.getType(), false);
+
                     //删除喜欢歌曲
                     Intent delIntent = new Intent(AudioBroadcastReceiver.ACTION_LIKEDELETE);
-                    delIntent.putExtra(AudioInfo.KEY, audioInfo);
                     delIntent.setFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES);
                     mContext.sendBroadcast(delIntent);
                 }
@@ -190,11 +192,33 @@ public class LocalMusicAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
             viewHolder.getDeleteImgBtn().setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
+                    AudioInfoDB.getAudioInfoDB(mContext).delete(audioInfo.getHash());
+                    if (playIndexPosition == position) {
+                        //发送空数据广播
+                        Intent nullIntent = new Intent(AudioBroadcastReceiver.ACTION_NULLMUSIC);
+                        nullIntent.setFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES);
+                        mContext.sendBroadcast(nullIntent);
+                    }
 
+                    //发送更新本地歌曲总数广播
+                    Intent updateIntent = new Intent(AudioBroadcastReceiver.ACTION_LOCALUPDATE);
+                    updateIntent.setFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES);
+                    mContext.sendBroadcast(updateIntent);
+
+                    //
+                    if (mMenuOpenIndex != -1) {
+                        mMenuOpenIndex = -1;
+                    }
+
+                    //更新界面
+                    if (mCallBack != null) {
+                        mCallBack.delete();
+                    }
                 }
             });
 
             //详情按钮
+            viewHolder.getDetailImgBtn().setVisibility(View.GONE);
             viewHolder.getDetailImgBtn().setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
@@ -565,7 +589,7 @@ public class LocalMusicAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
 
         public TextView getCategoryTextTextView() {
             if (categoryTextTextView == null) {
-                categoryTextTextView = (TextView) itemView
+                categoryTextTextView = itemView
                         .findViewById(R.id.category_text);
             }
             return categoryTextTextView;
@@ -585,11 +609,17 @@ public class LocalMusicAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
 
         public TextView getFooterTextView() {
             if (footerTextView == null) {
-                footerTextView = (TextView) itemView
+                footerTextView = itemView
                         .findViewById(R.id.list_size_text);
             }
             return footerTextView;
         }
     }
+    public void setCallBack(CallBack mCallBack) {
+        this.mCallBack = mCallBack;
+    }
 
+    public interface CallBack {
+        void delete();
+    }
 }

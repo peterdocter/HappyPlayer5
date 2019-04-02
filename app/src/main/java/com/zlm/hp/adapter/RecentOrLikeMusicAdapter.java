@@ -60,6 +60,10 @@ public class RecentOrLikeMusicAdapter extends RecyclerView.Adapter<RecyclerView.
 
 
     /////////////////////////////////////////
+
+    LikeCallBack mLikeCallBack;
+    RecentCallBack mRecentCallBack;
+
     /**
      * 菜单打开索引
      */
@@ -161,9 +165,11 @@ public class RecentOrLikeMusicAdapter extends RecyclerView.Adapter<RecyclerView.
                         viewHolder.getUnLikeImgBtn().setVisibility(View.VISIBLE);
                         ToastUtil.showTextToast(mContext, "取消成功");
 
+                        AudioInfoDB.getAudioInfoDB(mContext).deleteRecentOrLikeAudio(audioInfo.getHash(), audioInfo.getType(), false);
+
+
                         //删除喜欢歌曲
                         Intent delIntent = new Intent(AudioBroadcastReceiver.ACTION_LIKEDELETE);
-                        delIntent.putExtra(AudioInfo.KEY, audioInfo);
                         delIntent.setFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES);
                         mContext.sendBroadcast(delIntent);
                     }
@@ -183,20 +189,65 @@ public class RecentOrLikeMusicAdapter extends RecyclerView.Adapter<RecyclerView.
                         mContext.sendBroadcast(addIntent);
                     }
                 });
+                //删除按钮
+                viewHolder.getDeleteImgBtn().setVisibility(View.VISIBLE);
+                viewHolder.getDeleteImgBtn().setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+
+                        AudioInfoDB.getAudioInfoDB(mContext).deleteRecentOrLikeAudio(audioInfo.getHash(), audioInfo.getType(), true);
+
+                        //删除最近歌曲
+                        Intent delIntent = new Intent(AudioBroadcastReceiver.ACTION_RECENTUPDATE);
+                        delIntent.setFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES);
+                        mContext.sendBroadcast(delIntent);
+
+                        //
+                        if (mMenuOpenIndex != -1) {
+                            mMenuOpenIndex = -1;
+                        }
+
+                        if(mRecentCallBack != null){
+                            mRecentCallBack.delete();
+                        }
+
+                    }
+                });
             } else {
+                //取消喜欢按钮
+                viewHolder.getDeleteImgBtn().setVisibility(View.VISIBLE);
+                viewHolder.getDeleteImgBtn().setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+
+                        ToastUtil.showTextToast(mContext, "取消成功");
+
+                        AudioInfoDB.getAudioInfoDB(mContext).deleteRecentOrLikeAudio(audioInfo.getHash(), audioInfo.getType(), false);
+
+
+                        //删除喜欢歌曲
+                        Intent delIntent = new Intent(AudioBroadcastReceiver.ACTION_LIKEDELETE);
+                        delIntent.setFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES);
+                        mContext.sendBroadcast(delIntent);
+
+                        //
+                        if (mMenuOpenIndex != -1) {
+                            mMenuOpenIndex = -1;
+                        }
+
+
+                        if(mLikeCallBack != null){
+                            mLikeCallBack.delete();
+                        }
+                    }
+                });
                 viewHolder.getUnLikeImgBtn().setVisibility(View.GONE);
                 viewHolder.getLikedImgBtn().setVisibility(View.GONE);
             }
 
-            //删除按钮
-            viewHolder.getDeleteImgBtn().setVisibility(View.VISIBLE);
-            viewHolder.getDeleteImgBtn().setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
 
-                }
-            });
             //详情按钮
+            viewHolder.getDetailImgBtn().setVisibility(View.GONE);
             viewHolder.getDetailImgBtn().setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
@@ -207,7 +258,7 @@ public class RecentOrLikeMusicAdapter extends RecyclerView.Adapter<RecyclerView.
                 viewHolder.getDownloadParentRl().setVisibility(View.VISIBLE);
                 //
                 //下载
-                if (DownloadInfoDB.getAudioInfoDB(mContext).isExists(audioInfo.getHash())|| AudioInfoDB.getAudioInfoDB(mContext).isNetAudioExists(audioInfo.getHash())) {
+                if (DownloadInfoDB.getAudioInfoDB(mContext).isExists(audioInfo.getHash()) || AudioInfoDB.getAudioInfoDB(mContext).isNetAudioExists(audioInfo.getHash())) {
 
                     viewHolder.getDownloadedImg().setVisibility(View.VISIBLE);
                     viewHolder.getDownloadImg().setVisibility(View.INVISIBLE);
@@ -577,8 +628,23 @@ public class RecentOrLikeMusicAdapter extends RecyclerView.Adapter<RecyclerView.
     /////////////////////////////////////////////////////
 
 
+    public void setLikeCallBack(LikeCallBack mLikeCallBack) {
+        this.mLikeCallBack = mLikeCallBack;
+    }
+
+    public void setRecentCallBack(RecentCallBack mRecentCallBack) {
+        this.mRecentCallBack = mRecentCallBack;
+    }
+
     public void setState(int state) {
         this.state = state;
     }
 
+    public interface LikeCallBack{
+        void delete();
+    }
+
+    public interface RecentCallBack{
+        void delete();
+    }
 }

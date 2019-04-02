@@ -32,7 +32,7 @@ public class SplashActivity extends BaseActivity {
 
     private Handler mAnimationHandler;
     private Runnable mAnimationRunnable;
-    private int mDelayTime = 1000;
+    private int mDelayTime = 500;
 
 
     @Override
@@ -67,19 +67,27 @@ public class SplashActivity extends BaseActivity {
 
                 @Override
                 public boolean filter(String hash) {
+                    boolean flag = false;
+                    for (int i = 0; i < audioInfos.size(); i++) {
+                        AudioInfo audioInfo = audioInfos.get(i);
+                        if (audioInfo.getHash().equals(hash)) {
+                            flag = true;
+                            break;
+                        }
+                    }
+                    if (flag) {
+                        return true;
+                    }
                     return AudioInfoDB.getAudioInfoDB(getApplicationContext()).isExists(hash);
                 }
             });
             if (audioInfos.size() > 0) {
                 AudioInfoDB.getAudioInfoDB(getApplicationContext()).add(audioInfos);
             }
-
-            //设置延迟时间
-            mDelayTime *= 2;
             mHPApplication.setFrist(false);
         } else {
             //设置延迟时间
-            mDelayTime *= 3;
+            mDelayTime *= 2;
         }
 
         //注册捕捉全局异常
@@ -120,6 +128,7 @@ public class SplashActivity extends BaseActivity {
     private void initPreferencesData() {
         mHPApplication.setPlayStatus(AudioPlayerManager.STOP);
         //桌面歌词
+        mHPApplication.setDesktopLyricsIsMove((boolean) PreferencesUtil.getValue(getApplicationContext(), PreferencesConstants.desktopLyricsIsMove_KEY, true));
         mHPApplication.setShowDesktop((boolean) PreferencesUtil.getValue(getApplicationContext(), PreferencesConstants.isShowDesktop_KEY, false));
         //锁屏标志
         mHPApplication.setShowLockScreen((boolean) PreferencesUtil.getValue(getApplicationContext(), PreferencesConstants.isShowLockScreen_KEY, false));

@@ -42,6 +42,8 @@
     <string name="make_lrc_img">&#xe62e;</string>
     <string name="lrc_to_video">歌词图片生成器</string>
     <string name="lrc_to_video_img">&#xe646;</string>
+    <string name="timer_power_off">定时关闭</string>
+    <string name="timer_power_off_img">&#xe688;</string>
 
     <string name="no_net_img">&#xe62d;</string>
     <string name="loading_img">&#xe68e;</string>
@@ -60,6 +62,11 @@
     <string name="like_img">&#xe616;</string>
     <string name="liked_img">&#xe628;</string>
     <string name="more_img">&#xe602;</string>
+
+    //文件返回上一级
+    <string name="file_back">&#xe614;</string>
+    <string name="file_name">&#xe65a;</string>
+    <string name="file_directory">&#xe662;</string>
 
     //字体
     <string name="ziti_jia">&#xe6f9;</string>

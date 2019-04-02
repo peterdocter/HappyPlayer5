@@ -2,9 +2,7 @@ package com.zlm.hp.ui;
 
 import android.app.Activity;
 import android.content.Intent;
-import android.net.Uri;
 import android.os.AsyncTask;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -15,12 +13,14 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.zlm.hp.constants.ResourceConstants;
 import com.zlm.hp.lyrics.formats.LyricsFileReader;
 import com.zlm.hp.lyrics.formats.LyricsFileWriter;
 import com.zlm.hp.lyrics.model.LyricsInfo;
 import com.zlm.hp.lyrics.utils.LyricsIOUtils;
 import com.zlm.hp.utils.FileUtils;
 import com.zlm.hp.utils.HelperUtil;
+import com.zlm.hp.utils.ResourceFileUtil;
 import com.zlm.libs.widget.SwipeBackLayout;
 
 import java.io.File;
@@ -55,11 +55,11 @@ public class LrcConverterActivity extends BaseActivity {
      */
     public HelperUtil mHelper = new HelperUtil(this);
 
+
     /**
      * 选择源文件请求码
      */
     private final int SELECTORIGFILE = 0;
-
     /**
      * 设置源文件路径
      */
@@ -117,17 +117,8 @@ public class LrcConverterActivity extends BaseActivity {
             @Override
             public void onClick(View view) {
 
-                Intent intent = null;
-                if (Build.VERSION.SDK_INT < 19) {
-                    intent = new Intent(Intent.ACTION_GET_CONTENT);
-                    intent.setType("file/*");
-                    intent.addCategory(Intent.CATEGORY_OPENABLE);
-
-                } else {
-                    intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
-                    intent.setType("file/*");
-                }
-                startActivityForResult(intent, SELECTORIGFILE);
+                Intent selectFileIntent = new Intent(LrcConverterActivity.this, FileManagerActivity.class);
+                startActivityForResult(selectFileIntent, SELECTORIGFILE);
 
             }
         });
@@ -180,7 +171,8 @@ public class LrcConverterActivity extends BaseActivity {
                         //1.先读取源文件歌词
                         LyricsFileReader lyricsFileReader = LyricsIOUtils.getLyricsFileReader(orgFile);
                         String outFileName = FileUtils.removeExt(orgFile.getName());
-                        File outFile = new File(orgFile.getParent() + File.separator + outFileName + "." + outFormat);
+                        String outFilePath = ResourceFileUtil.getFilePath(getApplicationContext(), ResourceConstants.PATH_LYRICS, File.separator + outFileName + "." + outFormat);
+                        File outFile = new File(outFilePath);
                         //2.生成转换歌词文件
                         LyricsFileWriter lyricsFileWriter = LyricsIOUtils.getLyricsFileWriter(outFile);
                         LyricsInfo lyricsInfo = lyricsFileReader.readFile(orgFile);
@@ -234,20 +226,7 @@ public class LrcConverterActivity extends BaseActivity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == SELECTORIGFILE) {
             if (resultCode == Activity.RESULT_OK) {
-
-                Uri uri = data.getData();
-                if ("file".equalsIgnoreCase(uri.getScheme())) {//使用第三方应用打开
-                    mOrigFilePath = uri.getPath();
-
-                    return;
-                }
-                if (Build.VERSION.SDK_INT > Build.VERSION_CODES.KITKAT) {//4.4以后
-                    mOrigFilePath = FileUtils.getPath(getApplicationContext(), uri);
-
-                } else {//4.4以下下系统调用方法
-                    mOrigFilePath = FileUtils.getRealPathFromURI(getApplicationContext(), uri);
-
-                }
+                mOrigFilePath = data.getStringExtra("selectFilePath");
                 if (mOrigFilePath != null && !mOrigFilePath.equals("")) {
                     String ext = FileUtils.getFileExt(mOrigFilePath);
                     if (!ext.equals("krc") && !ext.equals("ksc") && !ext.equals("hrc")) {
